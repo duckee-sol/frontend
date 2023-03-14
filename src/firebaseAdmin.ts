@@ -1,12 +1,15 @@
 import admin from 'firebase-admin';
 import { getAuth } from 'firebase-admin/auth';
 
-if (!admin.apps.length && process.env.FIREBASE_ADMIN_CREDENTIALS) {
+let initialized = false;
+
+export async function initializeFirebaseOnce() {
+  if (initialized || admin.apps.length > 0) {
+    return;
+  }
   const adminCredentials = Buffer.from(process.env.FIREBASE_ADMIN_CREDENTIALS!, 'base64').toString('utf-8');
   admin.initializeApp({
     credential: admin.credential.cert(JSON.parse(adminCredentials)),
   });
+  initialized = true;
 }
-
-export const firebaseApp = admin.app();
-export const firebaseAuth = getAuth(firebaseApp);
