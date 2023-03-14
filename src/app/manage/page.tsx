@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { Button } from '~/components/ui/button';
+import { TypographyH2, TypographyInlineCode } from '~/components/ui/typography';
 import { useToast } from '~/hooks/use-toast';
+import { useWeb3Auth } from '~/hooks/use-web3auth';
 import RPC from '~/solanaRPC';
-import { TypographyH2, TypographyInlineCode } from '../../components/ui/typography';
-import { useWeb3Auth } from '../../hooks/use-web3auth';
-import './web3auth-custom.css';
 
 export default function App() {
   const { toast } = useToast();
