@@ -6,9 +6,9 @@ import { Icons } from '~/components/icons';
 import { Button } from '~/components/ui/button';
 import { TypographyH2, TypographyP, TypographySmall } from '~/components/ui/typography';
 
-export default function TransactPage() {
-  const query = useSearchParams();
-  const data = query.get('data');
+export default function MintTransactPage() {
+  const data = useSearchParams().get('data') ?? '{}';
+  const {} = JSON.parse(data);
 
   return (
     <div className="h-screen flex flex-col">
