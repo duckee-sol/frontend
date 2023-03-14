@@ -91,7 +91,7 @@ export default function App() {
       return;
     }
     const rpc = new RPC(provider);
-    const receipt = await rpc.sendTransaction();
+    const receipt = await rpc.sendTestTransaction();
     console.log(receipt);
   };
 
@@ -101,7 +101,7 @@ export default function App() {
       return;
     }
     const rpc = new RPC(provider);
-    const signedMessage = await rpc.signMessage();
+    const signedMessage = await rpc.signTestMessage();
     console.log(signedMessage);
   };
 

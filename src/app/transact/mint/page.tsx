@@ -41,7 +41,9 @@ export default function MintTransactPage() {
     const balance = await solana.getBalance();
     console.log(`Sending 1000 LAMPORT of ${balance} LAMPORT SOL`);
 
-    const txId = await solana.sendTransaction();
+    const txId = await solana.sendTestTransaction();
+    await solana.waitForConfirm(txId);
+
     console.log(`Transaction sent: ${txId}`);
 
     const response: MintTransactResponse = {
