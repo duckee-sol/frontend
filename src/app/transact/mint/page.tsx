@@ -1,16 +1,20 @@
 'use client';
 
+import { BN, Program, web3 } from '@project-serum/anchor';
+import { createApproveCheckedInstruction, getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import axios from 'axios';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { ArtCreation } from '~/@types/art';
+import { IDL } from '~/@types/duckee-prompt-market';
 import { Icons } from '~/components/icons';
 import { Button } from '~/components/ui/button';
 import { TypographyH2, TypographyP, TypographySmall } from '~/components/ui/typography';
+import { useToast } from '~/hooks/use-toast';
 import { useWeb3Auth } from '~/hooks/use-web3auth';
-import SolanaRpc from '~/solanaRPC';
-import { useToast } from '../../../hooks/use-toast';
-import { returnToAppWithData } from '../../../lib/in-app-browser';
+import { returnToAppWithData } from '~/lib/in-app-browser';
+import SolanaRpc, { DEVNET_ADDRESSES } from '~/solanaRPC';
 
 interface MintTransactResponse {
   tokenMint: string;
@@ -34,7 +38,8 @@ export default function MintTransactPage() {
   const data = useSearchParams().get('data') ?? DEFAULT_ART_JSON;
   const [address, setAddress] = useState('-');
   const [isSending, setIsSending] = useState(false);
-  const { imageUrl, description, priceInFlow, royaltyFee }: ArtCreation = JSON.parse(data);
+  const creation: ArtCreation = JSON.parse(data);
+  const { imageUrl, description, priceInFlow, royaltyFee } = creation;
 
   const handleTransaction = useCallback(async () => {
     if (!provider) {
@@ -46,13 +51,66 @@ export default function MintTransactPage() {
       const balance = await solana.getBalance();
       console.log(`Using ${balance} LAMPORT SOL`);
 
-      const txId = await solana.sendTestTransaction();
-      await solana.waitForConfirm(txId);
+      // 1. mint NFT
+      const signerPub = new web3.PublicKey((await solana.getAccounts())[0]);
+      const { data: createNftResult } = await axios.post('https://api-solana.duckee.xyz/art/v1/nft', {
+        recipient: signerPub.toBase58(),
+        art: {
+          tokenId: -1,
+          description,
+          imageUrl,
+          parentTokenId: creation.parentTokenId,
+        },
+      });
+      const { txId: createNftTx, tokenMint } = createNftResult as { tokenMint: string; txId: string };
+      console.log(`tokenMint: ${tokenMint}`);
 
-      console.log(`Transaction sent: ${txId}`);
+      if (priceInFlow === 0) {
+        const response: MintTransactResponse = {
+          tokenMint,
+          txId: createNftTx,
+          blockExplorerUrl: `https://solscan.io/tx/${createNftTx}?cluster=devnet`,
+        };
+        return returnToAppWithData('mint_result', response);
+      }
+
+      const program = new Program(IDL, DEVNET_ADDRESSES.DuckeePromptMarketProgram, solana);
+      const tokenMintPub = new web3.PublicKey(tokenMint);
+
+      const [listingPda] = findListingAccount(program, signerPub, tokenMintPub);
+      console.log(`Listing PDA: ${listingPda.toBase58()}`);
+
+      const [programAsSigner, pasBump] = findPromptMarketProgramAsSigner(program);
+      console.log(`Program-as-Signer PDA: ${programAsSigner.toBase58()} (${pasBump})`);
+
+      const tokenAccountPub = await getAssociatedTokenAddress(tokenMintPub, signerPub);
+
+      const block = await solana.connection.getLatestBlockhash('finalized');
+
+      const settleTx = new web3.Transaction({
+        blockhash: block.blockhash,
+        lastValidBlockHeight: block.lastValidBlockHeight,
+        feePayer: signerPub,
+      }).add(
+        createApproveCheckedInstruction(tokenAccountPub, tokenMintPub, programAsSigner, signerPub, 1, 0),
+        await program.methods
+          .list(new BN(1e9), new BN(0.01 * 1e9), pasBump)
+          .accounts({
+            user: signerPub,
+            promptMarket: new web3.PublicKey(DEVNET_ADDRESSES.PromptMarket),
+            listing: listingPda,
+            tokenAccount: tokenAccountPub,
+            programAsSigner,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            systemProgram: web3.SystemProgram.programId,
+          })
+          .instruction(),
+      );
+      const { signature: txId } = await solana.wallet.signAndSendTransaction(settleTx);
+      console.log(`Listing Tx Sent: ${txId}`);
 
       const response: MintTransactResponse = {
-        tokenMint: 'asdf',
+        tokenMint,
         txId,
         blockExplorerUrl: `https://solscan.io/tx/${txId}?cluster=devnet`,
       };
@@ -111,7 +169,7 @@ export default function MintTransactPage() {
         >
           {isSending ? (
             <>
-              <Icons.spinner className="mr-1" />
+              <Icons.spinner className="mr-1 animate-spin" />
               Sending...
             </>
           ) : (
@@ -128,3 +186,15 @@ export default function MintTransactPage() {
 
 const minimizeAddress = (address: string) =>
   address.length > 10 ? address.slice(0, 8) + '...' + address.slice(-8) : address;
+
+const findListingAccount = (promptMarket: Program<any>, lister: web3.PublicKey, nftMint: web3.PublicKey) =>
+  web3.PublicKey.findProgramAddressSync(
+    [Buffer.from('listing', 'utf8'), lister.toBuffer(), nftMint.toBuffer()],
+    promptMarket.programId,
+  );
+
+const findPromptMarketProgramAsSigner = (promptMarket: Program<any>) =>
+  web3.PublicKey.findProgramAddressSync(
+    ['prompt_market', 'signer'].map((seed) => Buffer.from(seed, 'utf8')),
+    promptMarket.programId,
+  );

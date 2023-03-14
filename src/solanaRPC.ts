@@ -12,6 +12,12 @@ import { SolanaWallet } from '@web3auth/solana-provider';
 
 export const SOLANA_RPC_URL = 'https://api.devnet.solana.com';
 
+export const DEVNET_ADDRESSES = {
+  DuckeePromptMarketProgram: 'EvQGLnWG9UVFh9jn8DjnHRQYdS5FyryJBDC8XpRWPWMR',
+  PromptMarket: 'g5QP8GsA7AmdnMv7QWFDxDBASyy2nmjgCSVvF6xoATu',
+  FakeUSDCMint: 'q3bd6t5p61uQtudkkHtEwUnLjwyZHbF4P6osuqsf91t',
+};
+
 export default class SolanaRpc {
   private provider: SafeEventEmitterProvider;
   public wallet: SolanaWallet;

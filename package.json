@@ -39,6 +39,7 @@
     "@radix-ui/react-toggle": "^1.0.1",
     "@radix-ui/react-toggle-group": "^1.0.1",
     "@radix-ui/react-tooltip": "^1.0.3",
+    "@solana/spl-token": "^0.3.7",
     "@solana/web3.js": "^1.66.1",
     "@types/node": "18.14.0",
     "@types/react": "18.0.28",
