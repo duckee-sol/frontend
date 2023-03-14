@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useWeb3Auth } from '~/hooks/use-web3auth';
+import { returnToAppWithData } from '~/lib/in-app-browser';
 import RPC from '../../solanaRPC';
 import './web3auth-custom.css';
 
@@ -26,11 +27,10 @@ export default function App() {
         const addresses = await rpc.getAccounts();
 
         console.log(`[${addresses.join(', ')}] addresses found. Returning back to app`);
-        const dataBackToMobile = JSON.stringify({
+        returnToAppWithData('auth_result', {
           idToken,
           address: addresses[0],
         });
-        document.location = `duckee://auth_result?data=${encodeURIComponent(dataBackToMobile)}`;
       })();
       return;
     }
