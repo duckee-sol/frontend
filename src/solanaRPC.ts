@@ -64,28 +64,24 @@ export default class SolanaRpc {
   }
 
   async sendTestTransaction(): Promise<string> {
-    try {
-      const accounts = await this.wallet.requestAccounts();
-      const block = await this.connection.getLatestBlockhash('finalized');
+    const accounts = await this.wallet.requestAccounts();
+    const block = await this.connection.getLatestBlockhash('finalized');
 
-      const TransactionInstruction = SystemProgram.transfer({
-        fromPubkey: new PublicKey(accounts[0]),
-        toPubkey: new PublicKey(accounts[0]),
-        lamports: 0.01 * LAMPORTS_PER_SOL,
-      });
+    const TransactionInstruction = SystemProgram.transfer({
+      fromPubkey: new PublicKey(accounts[0]),
+      toPubkey: new PublicKey(accounts[0]),
+      lamports: 0.01 * LAMPORTS_PER_SOL,
+    });
 
-      const transaction = new Transaction({
-        blockhash: block.blockhash,
-        lastValidBlockHeight: block.lastValidBlockHeight,
-        feePayer: new PublicKey(accounts[0]),
-      }).add(TransactionInstruction);
+    const transaction = new Transaction({
+      blockhash: block.blockhash,
+      lastValidBlockHeight: block.lastValidBlockHeight,
+      feePayer: new PublicKey(accounts[0]),
+    }).add(TransactionInstruction);
 
-      const { signature } = await this.wallet.signAndSendTransaction(transaction);
+    const { signature } = await this.wallet.signAndSendTransaction(transaction);
 
-      return signature;
-    } catch (error) {
-      return error as string;
-    }
+    return signature;
   }
 
   async signTestTransaction(): Promise<string> {
