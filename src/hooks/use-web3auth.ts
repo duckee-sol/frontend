@@ -18,7 +18,7 @@ async function initWeb3Auth() {
     sessionTime: 86400 * 7,
     chainConfig: {
       chainNamespace: CHAIN_NAMESPACES.SOLANA,
-      chainId: '0x2', // Please use 0x1 for Mainnet, 0x2 for Testnet, 0x3 for Devnet
+      chainId: '0x3', // Please use 0x1 for Mainnet, 0x2 for Testnet, 0x3 for Devnet
       rpcTarget: 'https://api.devnet.solana.com',
     },
   });
