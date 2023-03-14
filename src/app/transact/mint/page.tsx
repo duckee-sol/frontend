@@ -3,12 +3,13 @@
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
+import { ArtCreation } from '~/@types/art';
 import { Icons } from '~/components/icons';
 import { Button } from '~/components/ui/button';
 import { TypographyH2, TypographyP, TypographySmall } from '~/components/ui/typography';
-import { Art, ArtCreation } from '~/@types/art';
 import { useWeb3Auth } from '~/hooks/use-web3auth';
 import SolanaRpc from '~/solanaRPC';
+import { useToast } from '../../../hooks/use-toast';
 import { returnToAppWithData } from '../../../lib/in-app-browser';
 
 interface MintTransactResponse {
@@ -29,29 +30,41 @@ const DEFAULT_ART_JSON = `{
 
 export default function MintTransactPage() {
   const { provider } = useWeb3Auth();
+  const { toast } = useToast();
   const data = useSearchParams().get('data') ?? DEFAULT_ART_JSON;
   const [address, setAddress] = useState('-');
+  const [isSending, setIsSending] = useState(false);
   const { imageUrl, description, priceInFlow, royaltyFee }: ArtCreation = JSON.parse(data);
 
   const handleTransaction = useCallback(async () => {
     if (!provider) {
       return;
     }
-    const solana = new SolanaRpc(provider);
-    const balance = await solana.getBalance();
-    console.log(`Sending 1000 LAMPORT of ${balance} LAMPORT SOL`);
+    try {
+      setIsSending(true);
+      const solana = new SolanaRpc(provider);
+      const balance = await solana.getBalance();
+      console.log(`Using ${balance} LAMPORT SOL`);
 
-    const txId = await solana.sendTestTransaction();
-    await solana.waitForConfirm(txId);
+      const txId = await solana.sendTestTransaction();
+      await solana.waitForConfirm(txId);
 
-    console.log(`Transaction sent: ${txId}`);
+      console.log(`Transaction sent: ${txId}`);
 
-    const response: MintTransactResponse = {
-      tokenMint: 'asdf',
-      txId,
-      blockExplorerUrl: `https://solscan.io/tx/${txId}?cluster=devnet`,
-    };
-    returnToAppWithData('mint_result', response);
+      const response: MintTransactResponse = {
+        tokenMint: 'asdf',
+        txId,
+        blockExplorerUrl: `https://solscan.io/tx/${txId}?cluster=devnet`,
+      };
+      returnToAppWithData('mint_result', response);
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: 'Unable to send a transaction',
+        description: (err as Error).message,
+      });
+      setIsSending(false);
+    }
   }, [provider]);
 
   useEffect(() => {
@@ -96,8 +109,17 @@ export default function MintTransactPage() {
           onClick={handleTransaction}
           className="w-full h-12 bg-slate-50 rounded-full text-lg font-semibold"
         >
-          <Icons.check className="mr-1" />
-          Confirm
+          {isSending ? (
+            <>
+              <Icons.spinner className="mr-1" />
+              Sending...
+            </>
+          ) : (
+            <>
+              <Icons.check className="mr-1" />
+              Confirm
+            </>
+          )}
         </Button>
       </div>
     </div>
