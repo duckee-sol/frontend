@@ -19,7 +19,7 @@ async function initWeb3Auth() {
     chainConfig: {
       chainNamespace: CHAIN_NAMESPACES.SOLANA,
       chainId: '0x2', // Please use 0x1 for Mainnet, 0x2 for Testnet, 0x3 for Devnet
-      rpcTarget: 'https://rpc.ankr.com/solana', // This is the public RPC we have added, please pass on your own endpoint while creating an app
+      rpcTarget: 'https://api.devnet.solana.com',
     },
   });
 
@@ -41,15 +41,20 @@ async function initWeb3Auth() {
 export const useWeb3Auth = () => {
   const [web3auth, setWeb3auth] = useState<Web3Auth | null>(null);
   const [provider, setProvider] = useState<SafeEventEmitterProvider | null>(null);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
+    if (initialized) {
+      return;
+    }
     initWeb3Auth()
       .then((web3auth) => {
         setWeb3auth(web3auth);
         setProvider(web3auth.provider);
+        setInitialized(true);
       })
       .catch((err) => console.error(`failed to initialize Web3Auth: ${err.stack}`));
-  });
+  }, [initialized]);
 
   return { web3auth, provider, setProvider };
 };

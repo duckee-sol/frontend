@@ -1,9 +1,9 @@
 'use client';
 
 import Image from 'next/image';
-import { TypographyH2, TypographyP, TypographySmall } from '~/components/ui/typography';
-import { Button } from '~/components/ui/button';
 import { Icons } from '~/components/icons';
+import { Button } from '~/components/ui/button';
+import { TypographyH2, TypographyP, TypographySmall } from '~/components/ui/typography';
 
 export default function TransactPage() {
   return (

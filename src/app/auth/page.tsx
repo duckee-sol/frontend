@@ -19,10 +19,13 @@ export default function App() {
         if (!provider || !web3auth) {
           return;
         }
-        const rpc = new RPC(provider);
         const { idToken } = await web3auth.authenticateUser();
+        console.log('ID Token: ' + idToken);
+
+        const rpc = new RPC(provider);
         const addresses = await rpc.getAccounts();
 
+        console.log(`[${addresses.join(', ')}] addresses found. Returning back to app`);
         const dataBackToMobile = JSON.stringify({
           idToken,
           address: addresses[0],
@@ -32,8 +35,8 @@ export default function App() {
       return;
     }
     if (!isModalShown) {
-      web3auth.connect().catch(console.error);
       setModalShown(true);
+      web3auth.connect().catch(console.error);
     }
   }, [web3auth, isModalShown, provider]);
 
