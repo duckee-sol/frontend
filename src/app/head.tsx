@@ -1,4 +1,4 @@
-import { siteConfig } from '~/config';
+import { siteConfig } from '../site-config';
 
 export default function Head() {
   const url = process.env.NEXT_PUBLIC_APP_URL;
