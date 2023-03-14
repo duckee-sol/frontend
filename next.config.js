@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: false,
   images: {
-    domains: ['avatars.githubusercontent.com', 'images.unsplash.com'],
+    domains: ['avatars.githubusercontent.com', 'images.unsplash.com', 'static.duckee.xyz'],
   },
   experimental: {
     appDir: true,
