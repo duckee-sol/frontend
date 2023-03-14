@@ -19,12 +19,12 @@ export default function App() {
           return;
         }
         const rpc = new RPC(provider);
-        const idToken = await web3auth.authenticateUser();
-        const address = await rpc.getAccounts();
+        const { idToken } = await web3auth.authenticateUser();
+        const addresses = await rpc.getAccounts();
 
         const dataBackToMobile = JSON.stringify({
           idToken,
-          address,
+          address: addresses[0],
         });
         document.location = `duckee://auth_result?data=${encodeURIComponent(dataBackToMobile)}`;
       })();
