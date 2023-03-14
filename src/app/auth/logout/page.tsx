@@ -11,10 +11,6 @@ export default function LogOut() {
     if (!web3auth) {
       return;
     }
-    if (web3auth && provider) {
-      alert('not logged in.');
-      return closeInAppBrowser();
-    }
     web3auth
       .logout()
       .then(() => closeInAppBrowser())
@@ -22,5 +18,8 @@ export default function LogOut() {
         console.error(err);
         closeInAppBrowser();
       });
+
+    const closeTimeout = setTimeout(closeInAppBrowser, 10000);
+    return () => clearTimeout(closeTimeout);
   }, [web3auth, provider]);
 }

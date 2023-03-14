@@ -1,11 +1,15 @@
 'use client';
 
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 import { Icons } from '~/components/icons';
 import { Button } from '~/components/ui/button';
 import { TypographyH2, TypographyP, TypographySmall } from '~/components/ui/typography';
 
 export default function TransactPage() {
+  const query = useSearchParams();
+  const data = query.get('data');
+
   return (
     <div className="h-screen flex flex-col">
       <div className="w-full flex-1 relative">
