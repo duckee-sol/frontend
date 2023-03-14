@@ -1,9 +1,9 @@
 'use client';
 
-import { CheckIcon } from 'lucide-react';
 import Image from 'next/image';
 import { TypographyH2, TypographyP, TypographySmall } from '~/components/ui/typography';
-import { Button } from '../../components/ui/button';
+import { Button } from '~/components/ui/button';
+import { Icons } from '~/components/icons';
 
 export default function TransactPage() {
   return (
@@ -38,7 +38,7 @@ export default function TransactPage() {
           </div>
         </div>
         <Button className="w-full h-12 bg-slate-50 rounded-full text-lg font-semibold">
-          <CheckIcon className="mr-1" />
+          <Icons.check className="mr-1" />
           Confirm
         </Button>
       </div>
