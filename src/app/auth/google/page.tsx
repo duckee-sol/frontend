@@ -1,58 +1,53 @@
 'use client';
 
-import { CHAIN_NAMESPACES, SafeEventEmitterProvider } from '@web3auth/base';
-import { Web3Auth } from '@web3auth/modal';
+import { CHAIN_NAMESPACES, SafeEventEmitterProvider, WALLET_ADAPTERS } from '@web3auth/base';
+import { Web3AuthCore } from '@web3auth/core';
 import { OpenloginAdapter } from '@web3auth/openlogin-adapter';
+import * as React from 'react';
 import { useEffect, useState } from 'react';
 import RPC from '~/solanaRPC';
-import './web3auth-custom.css';
 
 const clientId = 'BLnVV-OBD-mLsoO3bmjkZ1JSxeQCk6BxDwdGn2OxU8ydUGxMYue9AZrisCKD50yXxlo2au5YcSoE4m2t01QmyKs';
 
 export default function App() {
-  const [web3auth, setWeb3auth] = useState<Web3Auth | null>(null);
+  const [web3auth, setWeb3auth] = useState<Web3AuthCore | null>(null);
   const [provider, setProvider] = useState<SafeEventEmitterProvider | null>(null);
 
   useEffect(() => {
     const init = async () => {
-      try {
-        const web3auth = new Web3Auth({
-          clientId,
-          uiConfig: {
-            appName: 'Duckee',
-            appLogo: '/logo.png',
-            theme: 'dark',
-            defaultLanguage: 'en-US',
-          },
-          web3AuthNetwork: 'testnet', // mainnet, aqua, celeste, cyan or testnet
-          sessionTime: 86400 * 7,
-          chainConfig: {
-            chainNamespace: CHAIN_NAMESPACES.SOLANA,
-            chainId: '0x1', // Please use 0x1 for Mainnet, 0x2 for Testnet, 0x3 for Devnet
-            rpcTarget: 'https://rpc.ankr.com/solana', // This is the public RPC we have added, please pass on your own endpoint while creating an app
-          },
-        });
+      const web3auth = new Web3AuthCore({
+        clientId,
+        web3AuthNetwork: 'testnet', // mainnet, aqua, celeste, cyan or testnet
+        chainConfig: {
+          chainNamespace: CHAIN_NAMESPACES.SOLANA,
+          chainId: '0x2', // Please use 0x1 for Mainnet, 0x2 for Testnet, 0x3 for Devnet
+          rpcTarget: 'https://rpc.ankr.com/solana', // This is the public RPC we have added, please pass on your own endpoint while creating an app
+        },
+      });
+      const openloginAdapter = new OpenloginAdapter({
+        loginSettings: {
+          mfaLevel: 'none', // Pass on the mfa level of your choice: default, optional, mandatory, none
+          redirectUrl: '',
+        },
+        adapterSettings: {
+          uxMode: 'redirect',
+        },
+      });
+      web3auth.configureAdapter(openloginAdapter);
 
-        const openloginAdapter = new OpenloginAdapter({
-          loginSettings: {
-            mfaLevel: 'none', // Pass on the mfa level of your choice: default, optional, mandatory, none
-          },
-          adapterSettings: {},
-        });
-        web3auth.configureAdapter(openloginAdapter);
+      setWeb3auth(web3auth);
 
-        setWeb3auth(web3auth);
+      await web3auth.init();
+      setProvider(web3auth.provider);
+      console.log('Init finished');
 
-        await web3auth.initModal();
-        setProvider(web3auth.provider);
-
-        const connectedProvider = await web3auth.connect();
-        setProvider(connectedProvider);
-      } catch (error) {
-        console.error(error);
-      }
+      const web3authProvider = await web3auth.connectTo(WALLET_ADAPTERS.OPENLOGIN, {
+        mfaLevel: 'none', // Pass on the mfa level of your choice: default, optional, mandatory, none
+        loginProvider: 'google', // Pass on the login provider of your choice: google, facebook, discord, twitch, twitter, github, linkedin, apple, etc.
+      });
+      setProvider(web3authProvider);
     };
-    init();
+    init().catch(console.error);
   }, []);
 
   const authenticateUser = async () => {
