@@ -2,13 +2,14 @@
 
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Icons } from '~/components/icons';
 import { Button } from '~/components/ui/button';
 import { TypographyH2, TypographyP, TypographySmall } from '~/components/ui/typography';
 import { Art, ArtCreation } from '~/@types/art';
 import { useWeb3Auth } from '~/hooks/use-web3auth';
 import SolanaRpc from '~/solanaRPC';
+import { returnToAppWithData } from '../../../lib/in-app-browser';
 
 interface MintTransactResponse {
   tokenMint: string;
@@ -32,6 +33,25 @@ export default function MintTransactPage() {
   const [address, setAddress] = useState('-');
   const { imageUrl, description, priceInFlow, royaltyFee }: ArtCreation = JSON.parse(data);
 
+  const handleTransaction = useCallback(async () => {
+    if (!provider) {
+      return;
+    }
+    const solana = new SolanaRpc(provider);
+    const balance = await solana.getBalance();
+    console.log(`Sending 1000 LAMPORT of ${balance} LAMPORT SOL`);
+
+    const txId = await solana.sendTransaction();
+    console.log(`Transaction sent: ${txId}`);
+
+    const response: MintTransactResponse = {
+      tokenMint: 'asdf',
+      txId,
+      blockExplorerUrl: `https://solscan.io/tx/${txId}?cluster=devnet`,
+    };
+    returnToAppWithData('mint_result', response);
+  }, [provider]);
+
   useEffect(() => {
     if (!provider) {
       return;
@@ -52,8 +72,7 @@ export default function MintTransactPage() {
         <TypographyH2 noBorder>Confirm Transaction</TypographyH2>
         <TypographyP className="text-slate-300 [&:not(:first-child)]:mt-0">
           You{"'"} re about to <span className="font-semibold">mint an Art NFT</span>, and list on marketplace{' '}
-          <span className="font-semibold">so others can buy its prompts</span>.<br />
-          Are you sure you want to proceed?
+          <span className="font-semibold">so others can {priceInFlow === 0 ? 'view' : 'buy'} its prompts</span>.
         </TypographyP>
         <TypographySmall className="text-slate-50 mt-8 mb-2">Transaction Details</TypographySmall>
         <div className="w-full grid grid-cols-5 rounded-2xl bg-slate-900 mb-8 px-4 py-4">
@@ -66,11 +85,15 @@ export default function MintTransactPage() {
           <div className="col-span-3 space-y-2 flex flex-col items-end opacity-50">
             <TypographySmall>{minimizeAddress(address)}</TypographySmall>
             <TypographySmall>0.01 SOL</TypographySmall>
-            <TypographySmall>{priceInFlow || 'Free'}</TypographySmall>
+            <TypographySmall>{priceInFlow ? `${priceInFlow.toFixed(2)} USDC` : 'Free'}</TypographySmall>
             <TypographySmall>{royaltyFee > 1 ? royaltyFee : Math.floor(royaltyFee * 100)}%</TypographySmall>
           </div>
         </div>
-        <Button className="w-full h-12 bg-slate-50 rounded-full text-lg font-semibold">
+        <Button
+          disabled={!provider}
+          onClick={handleTransaction}
+          className="w-full h-12 bg-slate-50 rounded-full text-lg font-semibold"
+        >
           <Icons.check className="mr-1" />
           Confirm
         </Button>
