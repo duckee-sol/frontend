@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useWeb3Auth } from '~/hooks/use-web3auth';
 import RPC from '../../solanaRPC';
 import './web3auth-custom.css';
 
 export default function App() {
   const { web3auth, provider } = useWeb3Auth();
+  const [isModalShown, setModalShown] = useState(false);
 
   useEffect(() => {
     if (!web3auth) {
@@ -30,8 +31,11 @@ export default function App() {
       })();
       return;
     }
-    web3auth.connect().catch(console.error);
-  }, [web3auth, provider]);
+    if (!isModalShown) {
+      web3auth.connect().catch(console.error);
+      setModalShown(true);
+    }
+  }, [web3auth, isModalShown, provider]);
 
   // TODO: spinner?
   return <></>;
